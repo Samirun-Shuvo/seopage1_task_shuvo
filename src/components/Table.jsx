@@ -3,46 +3,56 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 import { IoIosSettings } from "react-icons/io";
 
 const Table = ({ data }) => {
-    // Pagination State
-    const itemsPerPage = 25; // Change this to control how many items per page
+    const itemsPerPage = 25;
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Column visibility state
-    const [visibleColumns, setVisibleColumns] = useState({
-        name: true,
-        projectLink: true,
-        projectId: true,
-        projectBudget: true,
-        bidValue: true,
-        created: true,
-        createdBy: true,
-        biddingDelayTime: true,
-        status: true,
-        dealStatus: true,
-        action: true,
-    });
+    // Dynamic column state
+    const [columns, setColumns] = useState([
+        { key: "#", label: "#", visible: true },
+        { key: "name", label: "Name", visible: true },
+        { key: "projectLink", label: "Project Link", visible: true },
+        { key: "projectId", label: "Project ID", visible: true },
+        { key: "projectBudget", label: "Project Budget", visible: true },
+        { key: "bidValue", label: "Bid Value", visible: true },
+        { key: "created", label: "Created", visible: true },
+        { key: "createdBy", label: "Created By", visible: true },
+        { key: "biddingDelayTime", label: "Bidding Delay Time", visible: true },
+        { key: "status", label: "Status", visible: true },
+        { key: "dealStatus", label: "Deal Status", visible: true },
+        { key: "action", label: "Action", visible: true },
+    ]);
 
-    // Calculate the start and end index for slicing the data
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-
-    // Slice the data for the current page
     const paginatedData = data.slice(startIndex, endIndex);
-
-    // Total pages calculation
     const totalPages = Math.ceil(data.length / itemsPerPage);
 
-    // Handle page change
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
+    const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+
+    // Drag-and-drop handlers
+    const onDragStart = (index) => (event) => {
+        event.dataTransfer.setData("draggedIndex", index);
+    };
+
+    const onDrop = (targetIndex) => (event) => {
+        const draggedIndex = event.dataTransfer.getData("draggedIndex");
+        const updatedColumns = [...columns];
+        const [draggedColumn] = updatedColumns.splice(draggedIndex, 1);
+        updatedColumns.splice(targetIndex, 0, draggedColumn);
+        setColumns(updatedColumns);
+    };
+
+    const onDragOver = (event) => {
+        event.preventDefault();
     };
 
     // Toggle column visibility
-    const toggleColumnVisibility = (column) => {
-        setVisibleColumns((prevState) => ({
-            ...prevState,
-            [column]: !prevState[column],
-        }));
+    const toggleColumnVisibility = (key) => {
+        setColumns((prev) =>
+            prev.map((column) =>
+                column.key === key ? { ...column, visible: !column.visible } : column
+            )
+        );
     };
 
     return (
@@ -54,97 +64,103 @@ const Table = ({ data }) => {
                         <IoIosSettings className="fs-4" />
                     </button>
                     <div className="dropdown-content absolute z-50 bg-white shadow-lg rounded-md p-2 w-48 right-8 top-0 mt-2">
-                        {Object.keys(visibleColumns).map((column) => (
-                            <label key={column} className="flex items-center space-x-2">
+                        {columns.map((column) => (
+                            <label key={column.key} className="flex items-center space-x-2">
                                 <input
                                     type="checkbox"
-                                    checked={visibleColumns[column]}
-                                    onChange={() => toggleColumnVisibility(column)}
+                                    checked={column.visible}
+                                    onChange={() => toggleColumnVisibility(column.key)}
                                 />
-                                <span>{column.replace(/([A-Z])/g, ' $1').toUpperCase()}</span>
+                                <span>{column.label}</span>
                             </label>
                         ))}
                     </div>
                 </div>
             </div>
 
-
             {/* Table */}
             <table className="table table-xs">
                 <thead>
                     <tr>
-                        {visibleColumns.name && <th>#</th>}
-                        {visibleColumns.name && <th>Name</th>}
-                        {visibleColumns.projectLink && <th>Project Link</th>}
-                        {visibleColumns.projectId && <th>Project Id</th>}
-                        {visibleColumns.projectBudget && <th>Project Budget</th>}
-                        {visibleColumns.bidValue && <th>Bid Value</th>}
-                        {visibleColumns.created && <th>Created</th>}
-                        {visibleColumns.createdBy && <th>Created By</th>}
-                        {visibleColumns.biddingDelayTime && <th>Bidding Delay Time</th>}
-                        {visibleColumns.status && <th>Status</th>}
-                        {visibleColumns.dealStatus && <th>Deal Status</th>}
-                        {visibleColumns.action && <th>Action</th>}
+                        {columns.map(
+                            (column, index) =>
+                                column.visible && (
+                                    <th
+                                        key={column.key}
+                                        draggable
+                                        onDragStart={onDragStart(index)}
+                                        onDragOver={onDragOver}
+                                        onDrop={onDrop(index)}
+                                        className="cursor-move text-center font-semibold bg-gray-100"
+                                    >
+                                        {column.label}
+                                    </th>
+                                )
+                        )}
                     </tr>
                 </thead>
                 <tbody className="text-gray-600">
-                    {paginatedData.map((item, index) => (
+                    {paginatedData.map((item, rowIndex) => (
                         <tr
                             key={item.id}
                             className="hover:bg-gray-50 transition duration-200"
                         >
-                            {visibleColumns.name && <td>{startIndex + index + 1}</td>}
-                            {visibleColumns.name && <td>{item.client_name || "N/A"}</td>}
-                            {visibleColumns.projectLink && (
-                                <td>
-                                    <a
-                                        href={item.project_link}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-500 hover:underline"
-                                    >
-                                        View Project
-                                    </a>
-                                </td>
-                            )}
-                            {visibleColumns.projectId && <td>{item.project_id || "N/A"}</td>}
-                            {visibleColumns.projectBudget && <td>{item.value || "N/A"}</td>}
-                            {visibleColumns.bidValue && <td>{item.bid_value || "N/A"}</td>}
-                            {visibleColumns.created && <td>{new Date(item.created_at).toLocaleString()}</td>}
-                            {visibleColumns.createdBy && <td>{item.added_by || "N/A"}</td>}
-                            {visibleColumns.biddingDelayTime && (
-                                <td>
-                                    {item.bidding_minutes || 0}m {item.bidding_seconds || 0}s
-                                </td>
-                            )}
-                            {visibleColumns.status && (
-                                <td className="px-4 py-2 truncate">
-                                    {item.deal_status !== 0 ? (
-                                        <span className="bg-green-500 text-white rounded-full px-2 py-1 text-sm">
-                                            Converted to Deal
-                                        </span>
-                                    ) : (
-                                        <span className="bg-red-500 text-white rounded-full px-2 py-1 text-sm">
-                                            Not Converted to Deal
-                                        </span>
-                                    )}
-                                </td>
-                            )}
-                            {visibleColumns.dealStatus && (
-                                <td className="px-4 py-2 truncate">
-                                    {item.deal_status !== 0 ? (
-                                        <span className="bg-yellow-500 text-white rounded-full px-2 py-1 text-sm">
-                                            No Activity Yet
-                                        </span>
-                                    ) : (
-                                        <span className="text-gray-500 text-sm">Not Applicable</span>
-                                    )}
-                                </td>
-                            )}
-                            {visibleColumns.action && (
-                                <td>
-                                    <BsThreeDotsVertical />
-                                </td>
+                            {columns.map(
+                                (column) =>
+                                    column.visible && (
+                                        <td key={column.key}>
+                                            {column.key === "#"
+                                                ? startIndex + rowIndex + 1
+                                                : column.key === "name" ? (
+                                                    item.client_name
+                                                ) : column.key === "projectLink" ? (
+                                                    <a
+                                                        href={item.project_link}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-500 hover:underline"
+                                                    >
+                                                        View Project
+                                                    </a>
+                                                ) : column.key === "projectId" ? (
+                                                    item.project_id || "N/A"
+                                                ) : column.key === "projectBudget" ? (
+                                                    item.value || "N/A"
+                                                ) : column.key === "bidValue" ? (
+                                                    item.bid_value || "N/A"
+                                                ) : column.key === "created" ? (
+                                                    new Date(item.created_at).toLocaleString()
+                                                ) : column.key === "createdBy" ? (
+                                                    item.added_by || "N/A"
+                                                ) : column.key === "biddingDelayTime" ? (
+                                                    `${item.bidding_minutes || 0}m ${item.bidding_seconds || 0}s`
+                                                ) : column.key === "status" ? (
+                                                    <td className="px-4 py-2 truncate">
+                                                        {item.deal_status !== 0 ? (
+                                                            <span className="bg-green-500 text-white rounded-full px-2 py-1 text-sm">
+                                                                Converted to Deal
+                                                            </span>
+                                                        ) : (
+                                                            <span className="bg-red-500 text-white rounded-full px-2 py-1 text-sm">
+                                                                Not Converted to Deal
+                                                            </span>
+                                                        )}
+                                                    </td>
+                                                ) : column.key === "dealStatus" ? (
+                                                    <td className="px-4 py-2 truncate">
+                                                        {item.deal_status !== 0 ? (
+                                                            <span className="bg-yellow-500 text-white rounded-full px-2 py-1 text-sm">
+                                                                No Activity Yet
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-500 text-sm">Not Applicable</span>
+                                                        )}
+                                                    </td>
+                                                ) : column.key === "action" ? (
+                                                    <BsThreeDotsVertical />
+                                                ) : item[column.key] || "N/A"}
+                                        </td>
+                                    )
                             )}
                         </tr>
                     ))}
@@ -154,7 +170,6 @@ const Table = ({ data }) => {
             {/* Pagination Controls */}
             <div className="flex justify-end m-6">
                 <div className="btn-group">
-                    {/* Previous Button */}
                     <button
                         className="btn btn-xs"
                         onClick={() => handlePageChange(currentPage - 1)}
@@ -162,19 +177,16 @@ const Table = ({ data }) => {
                     >
                         Prev
                     </button>
-
-                    {/* Page Numbers */}
                     {[...Array(totalPages)].map((_, index) => (
                         <button
                             key={index}
-                            className={`btn ${currentPage === index + 1 ? "btn-active" : ""} mx-2 btn-xs`}
+                            className={`btn ${currentPage === index + 1 ? "btn-active" : ""
+                                } mx-2 btn-xs`}
                             onClick={() => handlePageChange(index + 1)}
                         >
                             {index + 1}
                         </button>
                     ))}
-
-                    {/* Next Button */}
                     <button
                         className="btn btn-xs"
                         onClick={() => handlePageChange(currentPage + 1)}
