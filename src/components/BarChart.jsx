@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { Chart } from "chart.js/auto";
 
-const Barchart = ({ data }) => {
+const BarChart = ({ data }) => {
   const chartRef = useRef(null); // Store the Chart.js instance
   const canvasRef = useRef(null); // Reference to the canvas element
 
@@ -81,4 +81,4 @@ const Barchart = ({ data }) => {
   );
 };
 
-export default Barchart;
+export default BarChart;

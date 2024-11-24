@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios"; // Make sure axios is imported
 import Table from "./components/Table";
-import Barchart from "./components/Barchart";
+import BarChart from "./components/BarChart";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
@@ -55,7 +55,7 @@ const App = () => {
 
       <h1 className="text-4xl font-bold mb-10">Bar-Chart Data</h1>
       <div>
-        <Barchart data={data} /> {/* Passing data to Barchart component if necessary */}
+        <BarChart data={data} /> {/* Passing data to Barchart component if necessary */}
       </div>
     </div>
   );
